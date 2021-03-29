@@ -14,6 +14,7 @@ namespace InfoTrackSearchEngineApp.Infrastructure
         public void AddTransientServices(IServiceCollection services)
         {
             services.AddTransient(typeof(GoogleSearchEngine));
+            services.AddTransient(typeof(BingSearchEngine));
         }
 
         public void AddSingletonConfigs(IConfiguration configuration, IServiceCollection services)

@@ -7,17 +7,16 @@ using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
-using System.Xml.XPath;
 
 namespace InfoTrackSearchEngineApp.Services.Implementations
 {
-    public class GoogleSearchEngine : ISearchEngine
+    public class BingSearchEngine : ISearchEngine
     {
-        private readonly string _baseUrl = "https://infotrack-tests.infotrack.com.au/Google";
+        private readonly string _baseUrl = "https://infotrack-tests.infotrack.com.au/Bing";
         private static readonly HttpClient client = new HttpClient();
         private readonly SearchConfigSettings _searchConfigSettings;
 
-        public GoogleSearchEngine(SearchConfigSettings searchConfigSettings)
+        public BingSearchEngine(SearchConfigSettings searchConfigSettings)
         {
             _searchConfigSettings = searchConfigSettings;
         }
@@ -44,8 +43,8 @@ namespace InfoTrackSearchEngineApp.Services.Implementations
                 HtmlDocument doc = new HtmlDocument();
                 doc.LoadHtml(htmlContent);
 
-                #region Check Google Ad results
-                var searchEngineAdResultNodes = doc.DocumentNode.SelectNodes("//li[@class = 'ads-fr']");
+                #region Check Bing Ad results
+                var searchEngineAdResultNodes = doc.DocumentNode.SelectNodes("//li[@class = 'b_ad']");
 
                 var resultIndex = totalSearchResultNodesCounted;
 
@@ -55,20 +54,20 @@ namespace InfoTrackSearchEngineApp.Services.Implementations
 
                     foreach (var resultNode in searchEngineAdResultNodes)
                     {
-                        var resultNodeHref = resultNode.SelectNodes("div/div/div/div/a").First().Attributes["href"];
+                        var resultNodeHyperLink = resultNode.SelectNodes("//cite").FirstOrDefault();
 
-                        if (resultNodeHref != null) 
-                            if (resultNodeHref.Value.StartsWith(url, StringComparison.OrdinalIgnoreCase)
+                        if (resultNodeHyperLink != null)
+                            if (resultNodeHyperLink.InnerText.StartsWith(url, StringComparison.OrdinalIgnoreCase)
                                 && (resultIndex < _searchConfigSettings.MaxSearchResultsChecking))
                                 response.Add(resultIndex);
+
                         ++resultIndex;
                     }
                 }
-
                 #endregion
 
                 #region Normal search results
-                var searchEngineResultNodes = doc.DocumentNode.SelectNodes("//div[@class = 'g']");
+                var searchEngineResultNodes = doc.DocumentNode.SelectNodes("//li[@class = 'b_algo']");
 
                 resultIndex = totalSearchResultNodesCounted;
 
@@ -77,10 +76,35 @@ namespace InfoTrackSearchEngineApp.Services.Implementations
 
                     foreach (var resultNode in searchEngineResultNodes)
                     {
-                        var resultNodeHref = resultNode.SelectNodes("div/div/a").First().Attributes["href"];
+                        var resultNodeAnchor = resultNode.SelectNodes("h2/a");
 
-                        if (resultNodeHref != null)
-                            if (resultNodeHref.Value.StartsWith(url, StringComparison.OrdinalIgnoreCase)
+                        if (resultNodeAnchor == null)
+                            resultNodeAnchor = resultNode.SelectNodes("//a");
+
+                        if (resultNodeAnchor != null)
+                            if (resultNodeAnchor.First().Attributes["href"].Value.StartsWith(url, StringComparison.OrdinalIgnoreCase)
+                                && (resultIndex < _searchConfigSettings.MaxSearchResultsChecking))
+                                response.Add(resultIndex);
+                        ++resultIndex;
+                    }
+                }
+                #endregion
+
+                #region Ad bottom search results
+                var searchEngineAdBottomResultNodes = doc.DocumentNode.SelectNodes("//li[@class = 'b_ad b_adBottom']/ul/li");
+
+                resultIndex = totalSearchResultNodesCounted;
+
+                if (searchEngineAdBottomResultNodes != null)
+                {
+                    totalSearchResultNodesCounted += searchEngineAdBottomResultNodes.Count;
+
+                    foreach (var resultNode in searchEngineAdBottomResultNodes)
+                    {
+                        var resultNodeHyperLink = resultNode.SelectNodes("//cite").FirstOrDefault();
+
+                        if (resultNodeHyperLink != null)
+                            if (resultNodeHyperLink.InnerText.StartsWith(url, StringComparison.OrdinalIgnoreCase)
                                 && (resultIndex < _searchConfigSettings.MaxSearchResultsChecking))
                                 response.Add(resultIndex);
                         ++resultIndex;
@@ -104,7 +128,7 @@ namespace InfoTrackSearchEngineApp.Services.Implementations
         /// <returns></returns>
         public string GetFriendlyName()
         {
-            return "Google";
+            return "Bing";
         }
     }
 }

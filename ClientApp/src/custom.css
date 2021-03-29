@@ -12,3 +12,15 @@ code {
   background-color: #1b6ec2;
   border-color: #1861ac;
 }
+
+.app-radio-list .option:not(:first-child) input {
+    margin-left: 10px;
+}
+
+.app-radio-list .option label {
+    margin-bottom: 0px;
+}
+
+.app-search-bar {
+    margin-top: 10px;
+}

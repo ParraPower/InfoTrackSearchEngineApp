@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import RadioList from './shared/RadioList';
 import SearchBar from './shared/Search';
 import SearchBarResults from './shared/SearchResults';
 import searchEngineServiceInstance from '../services/searchEngine';
@@ -9,24 +10,49 @@ export class Home extends Component {
     keyword = "online title search";
     url = null;
     searchResults = [];
+    searchEngines = [];
     hasRunSearch = false;
+    selectedSearchEngine = "";
 
     constructor() {
         super();
         this.state = {
-            searchResults: []
+            selectedSearchEngine: "",
+            searchResults: [],
+            searchEngines: []
         };
         this.onSetKeyword = this.onSetKeyword.bind(this);
         this.onSetUrl = this.onSetUrl.bind(this);
-        this.recordSearchResults = this.recordSearchResults.bind(this);
+        this.onSetSearchEngine = this.onSetSearchEngine.bind(this);
+        this.recordSearchResults = this.recordSearchResults.bind(this);        
+    }
+
+    componentDidMount() {
+        var that = this;
+
+        searchEngineServiceInstance.GetSearchEngines()
+            .then(resp => {
+                that.searchEngines = resp;
+
+                var defaultSearchEngine = resp.find(x => x.isDefault);
+
+                if (typeof defaultSearchEngine === "object")
+                    that.selectedSearchEngine = defaultSearchEngine.name;
+                else if (resp.length > 0)
+                    that.selectedSearchEngine = resp[0].name;
+                    
+                that.setState({
+                    searchEngines: resp
+                });
+            });
     }
 
     onSetKeyword = function (keyword) {
         this.keyword = keyword;
 
         var that = this;
-        
-        searchEngineServiceInstance.Search("Google", this.keyword, this.url)
+
+        searchEngineServiceInstance.Search(that.selectedSearchEngine, this.keyword, this.url)
             .then(resp => {
                 that.recordSearchResults(resp);
             });
@@ -37,10 +63,19 @@ export class Home extends Component {
 
         var that = this;
 
-        searchEngineServiceInstance.Search("Google", this.keyword, this.url)
+        searchEngineServiceInstance.Search(that.selectedSearchEngine, this.keyword, this.url)
             .then(resp => {
                 that.recordSearchResults(resp);
             });
+    }
+
+    onSetSearchEngine = function (name) {
+        var that = this;
+
+        that.selectedSearchEngine = name;
+        that.setState({
+            selectedSearchEngine: name
+        });
     }
 
     recordSearchResults = function (results) {
@@ -57,6 +92,14 @@ export class Home extends Component {
 
     return (
         <div>
+            <RadioList
+                id={"search_engines"}
+                label={"Search Engines"}
+                valueList={this.searchEngines}
+                setValue={this.onSetSearchEngine}
+                selectedValue={this.selectedSearchEngine}
+                />
+
             <SearchBar
                 keyword={this.keyword}
                 setKeyword={this.onSetKeyword}
@@ -72,7 +115,8 @@ export class Home extends Component {
                 results={this.searchResults}
                 
             />
-        <p>The <code>ClientApp</code> subdirectory is a standard React application based on the <code>create-react-app</code> template. If you open a command prompt in that directory, you can run <code>npm</code> commands such as <code>npm test</code> or <code>npm install</code>.</p>
+            <br />
+            <p>The <code>Application</code> will search <code>search engines</code> for the respective matches against the <code>keyword</code> and <code>url</code> fields. The search <code>fires automatically</code> when you type into the text boxes. No need to click a button.</p>
         </div>
     );
     }

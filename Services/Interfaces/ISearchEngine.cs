@@ -20,5 +20,11 @@ namespace InfoTrackSearchEngineApp.Services.Interfaces
         /// </summary>
         /// <returns></returns>
         public string GetBaseUrl();
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
+        public string GetFriendlyName();
     }
 }

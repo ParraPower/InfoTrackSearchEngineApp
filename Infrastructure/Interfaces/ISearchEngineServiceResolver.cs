@@ -9,5 +9,7 @@ namespace InfoTrackSearchEngineApp.Infrastructure.Interfaces
     public interface ISearchEngineServiceResolver
     {
         public ISearchEngine Resolve(string name);
+
+        public IEnumerable<ISearchEngine> GetServices();
     }
 }
